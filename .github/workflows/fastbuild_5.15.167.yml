@@ -1,4 +1,4 @@
-name: 快速构建 5.15.167 (SM8550)
+name: Fast build 5.15.167 (OnePlus SM8550)
 
 env:
   TZ: Asia/Shanghai
@@ -7,22 +7,22 @@ on:
   workflow_dispatch:
     inputs:
       manifest:
-        description: '目标一加 SM8550 机型列表(使用+分隔, 默认 oneplus12r)'
+        description: 'Target OnePlus SM8550 device list (use + as a separator, default oneplus12r)'
         required: false
         type: string
         default: 'oneplus12r'
       kernel_branch:
-        description: '指定 OnePlus SM8550 内核分支(留空使用设备默认)'
+        description: 'Override the kernel branch (leave blank to use the device default)'
         required: false
         type: string
         default: ''
       custom_suffix:
-        description: '自定义内核后缀(留空自动匹配)'
+        description: 'Custom kernel suffix (leave blank for automatic naming)'
         required: false
         type: string
         default: ''
       susfs_android_version:
-        description: 'SUSFS 补丁 Android 版本(13/14)'
+        description: 'SUSFS Android version (13/14)'
         required: true
         type: choice
         default: '13'
@@ -30,7 +30,7 @@ on:
           - '13'
           - '14'
       enable_kpm:
-        description: '是否启用 KPM (patch_linux)' 
+        description: 'Enable KPM (patch_linux)'
         required: true
         type: choice
         default: 'y'
@@ -38,7 +38,7 @@ on:
           - 'y'
           - 'n'
       ksu_type:
-        description: 'KernelSU 方案(SukiSU Ultra/KernelSU Next)'
+        description: 'KernelSU flavour (SukiSU Ultra / KernelSU Next)'
         required: true
         type: choice
         default: 'sukisu'
@@ -46,7 +46,7 @@ on:
           - 'sukisu'
           - 'ksunext'
       hook_mode:
-        description: 'SUSFS 钩子模式(manual/syscall/kprobes)'
+        description: 'SUSFS hook mode (manual/syscall/kprobes)'
         required: true
         type: choice
         default: 'manual'
@@ -55,7 +55,7 @@ on:
           - 'syscall'
           - 'kprobes'
       feature_flags:
-        description: '内核功能开关, 逗号分隔: lz4=,lz4kd=,better_net=,bbr=,ssg=,rekernel=,bbg='
+        description: 'Kernel feature toggles (comma separated: lz4=,lz4kd=,better_net=,bbr=,ssg=,rekernel=,bbg=)'
         required: false
         type: string
         default: 'lz4=y,lz4kd=n,better_net=y,bbr=n,ssg=y,rekernel=n,bbg=y'
@@ -67,7 +67,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 运行 5.15.167 构建脚本
+      - name: Run 5.15.167 builder
         id: build_kernel
         run: |
           chmod +x local/builder_5.15.167.sh
@@ -127,11 +127,11 @@ jobs:
 
           local/builder_5.15.167.sh
 
-      - name: 列出产物
+      - name: List build artefacts
         run: |
           ls -al kernel_workspace
 
-      - name: 上传 AnyKernel3 ZIP
+      - name: Upload AnyKernel3 ZIP
         uses: actions/upload-artifact@v4
         with:
           name: Kernel_5.15.167_Zips

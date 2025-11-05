@@ -1,10 +1,11 @@
-# Universal 6.1 kernel automation build scripts for OnePlus SM8550 / MT6989 / MT6897
+# OnePlus SM8550 kernel automation build scripts
 
 [![STAR](https://img.shields.io/github/stars/cctv18/oppo_oplus_realme_sm8550?style=flat&logo=github)](https://github.com/cctv18/oppo_oplus_realme_sm8550/stargazers)
 [![FORK](https://img.shields.io/github/forks/cctv18/oppo_oplus_realme_sm8550?style=flat&logo=greasyfork&color=%2394E61A)](https://github.com/cctv18/oppo_oplus_realme_sm8550/forks)
 [![COOLAPK](https://img.shields.io/badge/cctv18_2-cctv18_2?style=flat&logo=android&logoColor=FF4500&label=Coolapk&color=FF4500)](http://www.coolapk.com/u/22650293)
 [![DISCUSSION](https://img.shields.io/badge/Discussion-discussions?logo=livechat&logoColor=FFBBFF&color=3399ff)](https://github.com/cctv18/oppo_oplus_realme_sm8550/discussions)
 
+Automated tooling for compiling OnePlus Snapdragon 8 Gen 2 (SM8550) kernels based on the official OnePlus 11 Android 13 source drop (5.15.167). The workflows and helper scripts focus on repeatable builds for devices such as the OnePlus 11 and OnePlus 12R that rely on the same kernel tree and configuration conventions.
 A faster and more convenient automation script for compiling universal kernels for OnePlus devices based on Snapdragon 8 Gen 2 (SM8550), Dimensity 9400e (MT6989), and Dimensity 8350 (MT6897).
 
 ## Why this project exists
@@ -20,12 +21,7 @@ A faster and more convenient automation script for compiling universal kernels f
 - Provide both GitHub Actions workflows and local shell scripts for compiling the kernels.
 
 ## Implemented
-- [x] OnePlus SM8550 universal OKI kernel (based on the OnePlus 11 5.15.167 source; other devices on the same kernel version can be tested as needed).
-- [x] OnePlus MT6989 universal OKI kernel (based on the OnePlus Ace 5 Racing Edition 6.1.115 source; devices on the same kernel version can be tested).
-- [x] OnePlus MT6897 universal OKI kernel (based on the OnePlus Pad 6.1.128 source; devices on the same kernel version can be tested).
-- [x] OPPO / OnePlus / realme SM8550 universal OKI kernel (based on the OnePlus 11 5.15.167 source; other devices on the same kernel version can be tested as needed).
-- [x] OPPO / OnePlus / realme MT6989 universal OKI kernel (based on the OnePlus Ace 5 Racing Edition 6.1.115 source; devices on the same kernel version can be tested).
-- [x] OPPO / OnePlus / realme MT6897 universal OKI kernel (based on the OnePlus Pad 6.1.128 source; devices on the same kernel version can be tested).
+- [x] OnePlus SM8550 universal OKI kernel (based on the OnePlus 11 5.15.167 source; other SM8550 devices on Android 13 can be tested as needed).
 - [x] Optional SukiSU Ultra and KernelSU Next variants.
 - [x] Integrated `ccache` and extensive pipeline optimisations. A cached build completes in ~6 minutes (the first run takes ~22 minutes to populate the cache). Changing kernel config options invalidates much of the cache and increases subsequent builds to ~10 minutes. Returning to the original configuration restores the ~6 minute build time. GitHub Actions may evict caches after long periods of inactivity; the pipeline automatically recreates them when needed.
 - [x] O2 compilation optimisations for better runtime performance.
@@ -44,7 +40,6 @@ A faster and more convenient automation script for compiling universal kernels f
 - [ ] LXC / Docker support.
 - [ ] Nethunter driver port.
 - [ ] Port newer OnePlus schedulers (schedhorizon, etc.).
-- [ ] OnePlus 6.1 universal GKI kernel (port OnePlus F2FS sources to enable data-preserving flashes).
 - ~~Consolidate multi-version build scripts (skipped for usability and GitHub Actions input limits).~~
 - More optimisations and feature ports to come.
 
