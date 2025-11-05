@@ -6,9 +6,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # ===== Configure build parameters =====
-echo "===== OPPO/OnePlus/realme SM8550 universal 6.1.75 A15 OKI kernel local build script by Coolapk@cctv18 ====="
+echo "===== OnePlus SM8550 universal 6.1.75 A15 OKI kernel local build script by Coolapk@cctv18 ====="
 echo ">>> Loading user configuration..."
-MANIFEST=${MANIFEST:-oppo+oplus+realme}
+MANIFEST=${MANIFEST:-oneplus}
 read -p "Enter a custom kernel suffix (default: android14-11-o-gca13bffobf09): " CUSTOM_SUFFIX
 CUSTOM_SUFFIX=${CUSTOM_SUFFIX:-android14-11-o-gca13bffobf09}
 read -p "Enable KPM? (y/n, default: n): " USE_PATCH_LINUX

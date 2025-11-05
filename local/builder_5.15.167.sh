@@ -31,6 +31,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 # ===== Configure build parameters =====
+echo "===== OnePlus SM8550 universal 5.15.167 A15 OKI kernel local build script by Coolapk@cctv18 ====="
 echo "===== OPPO/OnePlus/realme SM8550 universal 5.15.167 A15 OKI kernel local build script by Coolapk@cctv18 ====="
 echo ">>> Loading user configuration..."
 SUPPORTED_ONEPLUS_8550_DEVICES=(
