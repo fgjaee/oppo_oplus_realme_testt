@@ -6,6 +6,7 @@
 [![DISCUSSION](https://img.shields.io/badge/Discussion-discussions?logo=livechat&logoColor=FFBBFF&color=3399ff)](https://github.com/cctv18/oppo_oplus_realme_sm8550/discussions)
 
 Automated tooling for compiling OnePlus Snapdragon 8 Gen 2 (SM8550) kernels based on the official OnePlus 11 Android 13 source drop (5.15.167). The workflows and helper scripts focus on repeatable builds for devices such as the OnePlus 11 and OnePlus 12R that rely on the same kernel tree and configuration conventions.
+A faster and more convenient automation script for compiling universal kernels for OnePlus devices based on Snapdragon 8 Gen 2 (SM8550), Dimensity 9400e (MT6989), and Dimensity 8350 (MT6897).
 
 ## Why this project exists
 - Several vendor source drops shipped without a complete configuration XML, making successful builds nearly impossible.

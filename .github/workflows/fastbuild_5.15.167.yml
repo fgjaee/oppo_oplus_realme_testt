@@ -74,10 +74,10 @@ jobs:
           cd "$GITHUB_WORKSPACE"
 
           if [ -n "${{ inputs.manifest }}" ]; then
-            export MANIFEST='${{ inputs.manifest }}'
+            export MANIFEST="${{ inputs.manifest }}"
           fi
           if [ -n "${{ inputs.kernel_branch }}" ]; then
-            export KERNEL_BRANCH='${{ inputs.kernel_branch }}'
+            export KERNEL_BRANCH="${{ inputs.kernel_branch }}"
           fi
 
           if [ -n "${{ inputs.custom_suffix }}" ]; then
@@ -85,6 +85,9 @@ jobs:
           fi
           export SUSFS_ANDROID_VERSION='${{ inputs.susfs_android_version }}'
           export USE_PATCH_LINUX='${{ inputs.enable_kpm }}'
+          CUSTOM_SUFFIX="${{ inputs.custom_suffix }}"
+          SUSFS_ANDROID="${{ inputs.susfs_android_version }}"
+          USE_KPM="${{ inputs.enable_kpm }}"
           if [ '${{ inputs.ksu_type }}' = 'sukisu' ]; then
             export KSU_BRANCH='y'
           else
