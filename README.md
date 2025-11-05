@@ -23,6 +23,9 @@ A faster and more convenient automation script for compiling universal kernels f
 - [x] OnePlus SM8550 universal OKI kernel (based on the OnePlus 11 5.15.167 source; other devices on the same kernel version can be tested as needed).
 - [x] OnePlus MT6989 universal OKI kernel (based on the OnePlus Ace 5 Racing Edition 6.1.115 source; devices on the same kernel version can be tested).
 - [x] OnePlus MT6897 universal OKI kernel (based on the OnePlus Pad 6.1.128 source; devices on the same kernel version can be tested).
+- [x] OPPO / OnePlus / realme SM8550 universal OKI kernel (based on the OnePlus 11 5.15.167 source; other devices on the same kernel version can be tested as needed).
+- [x] OPPO / OnePlus / realme MT6989 universal OKI kernel (based on the OnePlus Ace 5 Racing Edition 6.1.115 source; devices on the same kernel version can be tested).
+- [x] OPPO / OnePlus / realme MT6897 universal OKI kernel (based on the OnePlus Pad 6.1.128 source; devices on the same kernel version can be tested).
 - [x] Optional SukiSU Ultra and KernelSU Next variants.
 - [x] Integrated `ccache` and extensive pipeline optimisations. A cached build completes in ~6 minutes (the first run takes ~22 minutes to populate the cache). Changing kernel config options invalidates much of the cache and increases subsequent builds to ~10 minutes. Returning to the original configuration restores the ~6 minute build time. GitHub Actions may evict caches after long periods of inactivity; the pipeline automatically recreates them when needed.
 - [x] O2 compilation optimisations for better runtime performance.

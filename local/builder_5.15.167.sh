@@ -57,6 +57,7 @@ cd "$SCRIPT_DIR"
 
 # ===== Configure build parameters =====
 echo "===== OnePlus SM8550 universal 5.15.167 A15 OKI kernel local build script by Coolapk@cctv18 ====="
+echo "===== OPPO/OnePlus/realme SM8550 universal 5.15.167 A15 OKI kernel local build script by Coolapk@cctv18 ====="
 echo ">>> Loading user configuration..."
 SUPPORTED_ONEPLUS_8550_DEVICES=(
   "oneplus11"
@@ -109,6 +110,9 @@ if [[ "${KERNEL_BRANCH+x}" == "x" ]]; then
     KERNEL_BRANCH="$DEFAULT_BRANCH"
   fi
   echo ">>> Using kernel branch from environment: $KERNEL_BRANCH"
+if [[ -z "${KERNEL_BRANCH:-}" ]]; then
+  read -p "Enter kernel branch (default: ${DEFAULT_BRANCH}): " INPUT_KERNEL_BRANCH
+  KERNEL_BRANCH=${INPUT_KERNEL_BRANCH:-$DEFAULT_BRANCH}
 else
   read -p "Enter kernel branch (default: ${DEFAULT_BRANCH}): " INPUT_KERNEL_BRANCH
   KERNEL_BRANCH=${INPUT_KERNEL_BRANCH:-$DEFAULT_BRANCH}
@@ -128,6 +132,8 @@ else
   read -p "Enter custom kernel suffix (default: ${DEFAULT_SUFFIX}): " INPUT_CUSTOM_SUFFIX
   CUSTOM_SUFFIX=${INPUT_CUSTOM_SUFFIX:-$DEFAULT_SUFFIX}
 fi
+read -p "Enter custom kernel suffix (default: ${DEFAULT_SUFFIX}): " INPUT_CUSTOM_SUFFIX
+CUSTOM_SUFFIX=${INPUT_CUSTOM_SUFFIX:-$DEFAULT_SUFFIX}
 
 DEFAULT_SUSFS_ANDROID_VERSION=14
 if contains_device "oneplus12r" "${MANIFEST_DEVICES[@]}"; then
