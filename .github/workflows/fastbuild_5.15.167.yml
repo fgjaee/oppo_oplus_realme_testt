@@ -80,19 +80,21 @@ jobs:
             export KERNEL_BRANCH='${{ inputs.kernel_branch }}'
           fi
 
-          CUSTOM_SUFFIX='${{ inputs.custom_suffix }}'
-          SUSFS_ANDROID='${{ inputs.susfs_android_version }}'
-          USE_KPM='${{ inputs.enable_kpm }}'
+          if [ -n "${{ inputs.custom_suffix }}" ]; then
+            export CUSTOM_SUFFIX='${{ inputs.custom_suffix }}'
+          fi
+          export SUSFS_ANDROID_VERSION='${{ inputs.susfs_android_version }}'
+          export USE_PATCH_LINUX='${{ inputs.enable_kpm }}'
           if [ '${{ inputs.ksu_type }}' = 'sukisu' ]; then
-            KSU_BRANCH_INPUT='y'
+            export KSU_BRANCH='y'
           else
-            KSU_BRANCH_INPUT='n'
+            export KSU_BRANCH='n'
           fi
           case '${{ inputs.hook_mode }}' in
-            manual) HOOK_INPUT='m' ;;
-            syscall) HOOK_INPUT='s' ;;
-            kprobes) HOOK_INPUT='k' ;;
-            *) HOOK_INPUT='m' ;;
+            manual) export APPLY_HOOKS='m' ;;
+            syscall) export APPLY_HOOKS='s' ;;
+            kprobes) export APPLY_HOOKS='k' ;;
+            *) export APPLY_HOOKS='m' ;;
           esac
           FEATURE_FLAGS_RAW='${{ inputs.feature_flags }}'
           FEATURE_FLAGS=$(printf '%s' "$FEATURE_FLAGS_RAW" | tr -d ' \t\n\r')
@@ -112,28 +114,15 @@ jobs:
             printf '%s' "$default"
           }
 
-          LZ4_INPUT=$(get_flag lz4 y)
-          LZ4KD_INPUT=$(get_flag lz4kd n)
-          BETTERNET_INPUT=$(get_flag better_net y)
-          BBR_INPUT=$(get_flag bbr n)
-          SSG_INPUT=$(get_flag ssg y)
-          REKERNEL_INPUT=$(get_flag rekernel n)
-          BBG_INPUT=$(get_flag bbg y)
+          export APPLY_LZ4="$(get_flag lz4 y)"
+          export APPLY_LZ4KD="$(get_flag lz4kd n)"
+          export APPLY_BETTERNET="$(get_flag better_net y)"
+          export APPLY_BBR="$(get_flag bbr n)"
+          export APPLY_SSG="$(get_flag ssg y)"
+          export APPLY_REKERNEL="$(get_flag rekernel n)"
+          export APPLY_BBG="$(get_flag bbg y)"
 
-          printf '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
-            "$CUSTOM_SUFFIX" \
-            "$SUSFS_ANDROID" \
-            "$USE_KPM" \
-            "$KSU_BRANCH_INPUT" \
-            "$HOOK_INPUT" \
-            "$LZ4_INPUT" \
-            "$LZ4KD_INPUT" \
-            "$BETTERNET_INPUT" \
-            "$BBR_INPUT" \
-            "$SSG_INPUT" \
-            "$REKERNEL_INPUT" \
-            "$BBG_INPUT" \
-            | local/builder_5.15.167.sh
+          local/builder_5.15.167.sh
 
       - name: 列出产物
         run: |
