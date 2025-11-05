@@ -54,63 +54,11 @@ on:
           - 'manual'
           - 'syscall'
           - 'kprobes'
-      enable_lz4:
-        description: '是否应用 LZ4+ZSTD 补丁'
-        required: true
-        type: choice
-        default: 'y'
-        options:
-          - 'y'
-          - 'n'
-      enable_lz4kd:
-        description: '是否应用 LZ4KD 补丁'
-        required: true
-        type: choice
-        default: 'n'
-        options:
-          - 'y'
-          - 'n'
-      enable_better_net:
-        description: '是否启用网络功能增强配置'
-        required: true
-        type: choice
-        default: 'y'
-        options:
-          - 'y'
-          - 'n'
-      enable_bbr:
-        description: '是否启用 BBR 及相关算法(y/n/d=设为默认)'
-        required: true
-        type: choice
-        default: 'n'
-        options:
-          - 'y'
-          - 'n'
-          - 'd'
-      enable_ssg:
-        description: '是否启用三星 SSG IO 调度器'
-        required: true
-        type: choice
-        default: 'y'
-        options:
-          - 'y'
-          - 'n'
-      enable_rekernel:
-        description: '是否启用 Re-Kernel 支持'
-        required: true
-        type: choice
-        default: 'n'
-        options:
-          - 'y'
-          - 'n'
-      enable_bbg:
-        description: '是否启用内核级基带保护'
-        required: true
-        type: choice
-        default: 'y'
-        options:
-          - 'y'
-          - 'n'
+      feature_flags:
+        description: '内核功能开关, 逗号分隔: lz4=,lz4kd=,better_net=,bbr=,ssg=,rekernel=,bbg='
+        required: false
+        type: string
+        default: 'lz4=y,lz4kd=n,better_net=y,bbr=n,ssg=y,rekernel=n,bbg=y'
 
 jobs:
   build:
@@ -126,15 +74,15 @@ jobs:
           cd "$GITHUB_WORKSPACE"
 
           if [ -n "${{ inputs.manifest }}" ]; then
-            export MANIFEST='${{ inputs.manifest }}'
+            export MANIFEST="${{ inputs.manifest }}"
           fi
           if [ -n "${{ inputs.kernel_branch }}" ]; then
-            export KERNEL_BRANCH='${{ inputs.kernel_branch }}'
+            export KERNEL_BRANCH="${{ inputs.kernel_branch }}"
           fi
 
-          CUSTOM_SUFFIX='${{ inputs.custom_suffix }}'
-          SUSFS_ANDROID='${{ inputs.susfs_android_version }}'
-          USE_KPM='${{ inputs.enable_kpm }}'
+          CUSTOM_SUFFIX="${{ inputs.custom_suffix }}"
+          SUSFS_ANDROID="${{ inputs.susfs_android_version }}"
+          USE_KPM="${{ inputs.enable_kpm }}"
           if [ '${{ inputs.ksu_type }}' = 'sukisu' ]; then
             KSU_BRANCH_INPUT='y'
           else
@@ -146,13 +94,35 @@ jobs:
             kprobes) HOOK_INPUT='k' ;;
             *) HOOK_INPUT='m' ;;
           esac
-          LZ4_INPUT='${{ inputs.enable_lz4 }}'
-          LZ4KD_INPUT='${{ inputs.enable_lz4kd }}'
-          BETTERNET_INPUT='${{ inputs.enable_better_net }}'
-          BBR_INPUT='${{ inputs.enable_bbr }}'
-          SSG_INPUT='${{ inputs.enable_ssg }}'
-          REKERNEL_INPUT='${{ inputs.enable_rekernel }}'
-          BBG_INPUT='${{ inputs.enable_bbg }}'
+          FEATURE_FLAGS_RAW="${{ inputs.feature_flags }}"
+          FEATURE_FLAGS=$(printf '%s' "$FEATURE_FLAGS_RAW" | tr -d ' \t\n\r')
+          if [[ "$SUSFS_ANDROID" != "13" && "$SUSFS_ANDROID" != "14" ]]; then
+            echo "Error: Unsupported Android version: $SUSFS_ANDROID"
+            exit 1
+          fi
+          get_flag() {
+            local key="$1"
+            local default="$2"
+            local IFS=','
+            for pair in $FEATURE_FLAGS; do
+              if [ "${pair%%=*}" = "$key" ]; then
+                local value="${pair#*=}"
+                if [ -n "$value" ]; then
+                  printf '%s' "$value"
+                  return
+                fi
+              fi
+            done
+            printf '%s' "$default"
+          }
+
+          LZ4_INPUT=$(get_flag lz4 y)
+          LZ4KD_INPUT=$(get_flag lz4kd n)
+          BETTERNET_INPUT=$(get_flag better_net y)
+          BBR_INPUT=$(get_flag bbr n)
+          SSG_INPUT=$(get_flag ssg y)
+          REKERNEL_INPUT=$(get_flag rekernel n)
+          BBG_INPUT=$(get_flag bbg y)
 
           printf '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
             "$CUSTOM_SUFFIX" \
