@@ -54,6 +54,11 @@ on:
           - 'manual'
           - 'syscall'
           - 'kprobes'
+      feature_flags:
+        description: '内核功能开关, 逗号分隔: lz4=,lz4kd=,better_net=,bbr=,ssg=,rekernel=,bbg='
+        required: false
+        type: string
+        default: 'lz4=y,lz4kd=n,better_net=y,bbr=n,ssg=y,rekernel=n,bbg=y'
 
 jobs:
   build:
@@ -89,17 +94,31 @@ jobs:
             kprobes) HOOK_INPUT='k' ;;
             *) HOOK_INPUT='m' ;;
           esac
-          if [[ "$SUSFS_ANDROID" != "13" && "$SUSFS_ANDROID" != "14" ]]; then
-            echo "Error: Unsupported Android version: $SUSFS_ANDROID"
-            exit 1
-          fi
-          LZ4_INPUT='y'
-          LZ4KD_INPUT='n'
-          BETTERNET_INPUT='y'
-          BBR_INPUT='n'
-          SSG_INPUT='y'
-          REKERNEL_INPUT='n'
-          BBG_INPUT='y'
+          FEATURE_FLAGS_RAW='${{ inputs.feature_flags }}'
+          FEATURE_FLAGS=$(printf '%s' "$FEATURE_FLAGS_RAW" | tr -d ' \t\n\r')
+          get_flag() {
+            local key="$1"
+            local default="$2"
+            local IFS=','
+            for pair in $FEATURE_FLAGS; do
+              if [ "${pair%%=*}" = "$key" ]; then
+                local value="${pair#*=}"
+                if [ -n "$value" ]; then
+                  printf '%s' "$value"
+                  return
+                fi
+              fi
+            done
+            printf '%s' "$default"
+          }
+
+          LZ4_INPUT=$(get_flag lz4 y)
+          LZ4KD_INPUT=$(get_flag lz4kd n)
+          BETTERNET_INPUT=$(get_flag better_net y)
+          BBR_INPUT=$(get_flag bbr n)
+          SSG_INPUT=$(get_flag ssg y)
+          REKERNEL_INPUT=$(get_flag rekernel n)
+          BBG_INPUT=$(get_flag bbg y)
 
           printf '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
             "$CUSTOM_SUFFIX" \
