@@ -1,5 +1,4 @@
 # Universal 6.1 kernel automation build scripts for OnePlus SM8550 / MT6989 / MT6897
-# Universal 6.1 kernel automation build scripts for OPPO / OnePlus / realme SM8550 / MT6989 / MT6897
 
 [![STAR](https://img.shields.io/github/stars/cctv18/oppo_oplus_realme_sm8550?style=flat&logo=github)](https://github.com/cctv18/oppo_oplus_realme_sm8550/stargazers)
 [![FORK](https://img.shields.io/github/forks/cctv18/oppo_oplus_realme_sm8550?style=flat&logo=greasyfork&color=%2394E61A)](https://github.com/cctv18/oppo_oplus_realme_sm8550/forks)
@@ -12,12 +11,6 @@ A faster and more convenient automation script for compiling universal kernels f
 - Several vendor source drops shipped without a complete configuration XML, making successful builds nearly impossible.
 - The stock Bazel toolchain used by the vendor is unstable and inefficient. Builds often fail with obscure errors and there is very little public documentation, which is especially painful for newcomers.
 - The vendor customised the F2FS implementation in their kernels. After flashing a GKI kernel you must wipe the data partition or the device fails to boot.
-A faster and more convenient automation script for compiling universal kernels for OPPO / OnePlus / realme devices based on Snapdragon 8 Gen 2 (SM8550), Dimensity 9400e (MT6989), and Dimensity 8350 (MT6897).
-
-## Why this project exists
-- OPPO released incomplete source drops, leaving several kernels without a complete configuration XML and making successful builds nearly impossible.
-- The stock Bazel toolchain used by OPPO is unstable and inefficient. Builds often fail with obscure errors and there is very little public documentation, which is especially painful for newcomers.
-- OPPO customised the F2FS implementation in their kernels. After flashing a GKI kernel you must wipe the data partition or the device fails to boot.
 
 ## Project scope and roadmap
 - Provide OKI (official sources) and GKI (Google Generic Kernel Image sources) build modes. OKI retains the vendor drivers and schedulers, while GKI offers greater compatibility (no need to match kernel patch levels exactly).
@@ -52,7 +45,6 @@ A faster and more convenient automation script for compiling universal kernels f
 - [ ] Nethunter driver port.
 - [ ] Port newer OnePlus schedulers (schedhorizon, etc.).
 - [ ] OnePlus 6.1 universal GKI kernel (port OnePlus F2FS sources to enable data-preserving flashes).
-- [ ] OPPO / OnePlus / realme 6.1 universal GKI kernel (port OnePlus F2FS sources to enable data-preserving flashes).
 - ~~Consolidate multi-version build scripts (skipped for usability and GitHub Actions input limits).~~
 - More optimisations and feature ports to come.
 

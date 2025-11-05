@@ -12,6 +12,31 @@ function contains_device() {
   return 1
 }
 
+function normalize_android_version() {
+  local raw="$1"
+  # Trim whitespace and convert to lowercase for consistent comparisons
+  raw="${raw//[$'\t\n\r ']}"
+  raw="${raw,,}"
+  # Strip common prefixes such as android/a/v that may appear in inputs
+  raw="${raw#android}"
+  raw="${raw#a}"
+  raw="${raw#v}"
+  # Normalize versions that include a trailing .0
+  if [[ "$raw" == "13.0" ]]; then
+    raw="13"
+  elif [[ "$raw" == "14.0" ]]; then
+    raw="14"
+  fi
+  case "$raw" in
+  "13" | "14")
+    echo "$raw"
+    return 0
+    ;;
+  esac
+  echo ""
+  return 1
+}
+
 function download_latest_patch_linux() {
   local output_path="$1"
   local asset_url
@@ -80,11 +105,17 @@ DEFAULT_BRANCH=${DEFAULT_BRANCH:-oneplus/sm8550_v_15.0.0_oneplus11}
 if contains_device "oneplus12r" "${MANIFEST_DEVICES[@]}"; then
   echo ">>> OnePlus 12R detected, applying the Android 13 / SUSFS / KPM defaults"
 fi
+if [[ "${KERNEL_BRANCH+x}" == "x" ]]; then
+  if [[ -z "$KERNEL_BRANCH" ]]; then
+    KERNEL_BRANCH="$DEFAULT_BRANCH"
+  fi
+  echo ">>> Using kernel branch from environment: $KERNEL_BRANCH"
 if [[ -z "${KERNEL_BRANCH:-}" ]]; then
   read -p "Enter kernel branch (default: ${DEFAULT_BRANCH}): " INPUT_KERNEL_BRANCH
   KERNEL_BRANCH=${INPUT_KERNEL_BRANCH:-$DEFAULT_BRANCH}
 else
-  KERNEL_BRANCH="$KERNEL_BRANCH"
+  read -p "Enter kernel branch (default: ${DEFAULT_BRANCH}): " INPUT_KERNEL_BRANCH
+  KERNEL_BRANCH=${INPUT_KERNEL_BRANCH:-$DEFAULT_BRANCH}
 fi
 
 DEFAULT_SUFFIX="android14-12-o-gc462ef8ffab7"
@@ -92,6 +123,15 @@ if [[ "$DEFAULT_BRANCH" == *"oneplus_12r"* ]]; then
   DEFAULT_SUFFIX="android13-oneplus12r"
 fi
 
+if [[ "${CUSTOM_SUFFIX+x}" == "x" ]]; then
+  if [[ -z "$CUSTOM_SUFFIX" ]]; then
+    CUSTOM_SUFFIX="$DEFAULT_SUFFIX"
+  fi
+  echo ">>> Using custom kernel suffix from environment: -$CUSTOM_SUFFIX"
+else
+  read -p "Enter custom kernel suffix (default: ${DEFAULT_SUFFIX}): " INPUT_CUSTOM_SUFFIX
+  CUSTOM_SUFFIX=${INPUT_CUSTOM_SUFFIX:-$DEFAULT_SUFFIX}
+fi
 read -p "Enter custom kernel suffix (default: ${DEFAULT_SUFFIX}): " INPUT_CUSTOM_SUFFIX
 CUSTOM_SUFFIX=${INPUT_CUSTOM_SUFFIX:-$DEFAULT_SUFFIX}
 
@@ -100,38 +140,122 @@ if contains_device "oneplus12r" "${MANIFEST_DEVICES[@]}"; then
   DEFAULT_SUSFS_ANDROID_VERSION=13
 fi
 
-read -p "Select SUSFS patch Android version (13/14, default: ${DEFAULT_SUSFS_ANDROID_VERSION}): " INPUT_SUSFS_ANDROID_VERSION
-SUSFS_ANDROID_VERSION=${INPUT_SUSFS_ANDROID_VERSION:-$DEFAULT_SUSFS_ANDROID_VERSION}
-if [[ "$SUSFS_ANDROID_VERSION" != "13" && "$SUSFS_ANDROID_VERSION" != "14" ]]; then
-  echo ">>> Unrecognized Android version, defaulting to 14"
-  SUSFS_ANDROID_VERSION=14
+if [[ "${SUSFS_ANDROID_VERSION+x}" == "x" ]]; then
+  if [[ -z "$SUSFS_ANDROID_VERSION" ]]; then
+    SUSFS_ANDROID_VERSION="$DEFAULT_SUSFS_ANDROID_VERSION"
+  fi
+  echo ">>> Using SUSFS Android version from environment: $SUSFS_ANDROID_VERSION"
+else
+  read -p "Select SUSFS patch Android version (13/14, default: ${DEFAULT_SUSFS_ANDROID_VERSION}): " INPUT_SUSFS_ANDROID_VERSION
+  SUSFS_ANDROID_VERSION=${INPUT_SUSFS_ANDROID_VERSION:-$DEFAULT_SUSFS_ANDROID_VERSION}
 fi
+NORMALIZED_SUSFS_ANDROID_VERSION=$(normalize_android_version "$SUSFS_ANDROID_VERSION")
+if [[ -z "$NORMALIZED_SUSFS_ANDROID_VERSION" ]]; then
+  if contains_device "oneplus12r" "${MANIFEST_DEVICES[@]}"; then
+    echo ">>> Unrecognized Android version input, forcing Android 13 defaults for OnePlus 12R"
+    NORMALIZED_SUSFS_ANDROID_VERSION=13
+  else
+    echo ">>> Unrecognized Android version input, defaulting to Android 14"
+    NORMALIZED_SUSFS_ANDROID_VERSION=14
+  fi
+fi
+SUSFS_ANDROID_VERSION="$NORMALIZED_SUSFS_ANDROID_VERSION"
 SUSFS_BRANCH="gki-android${SUSFS_ANDROID_VERSION}-5.15"
 SUSFS_PATCH_FILE="50_add_susfs_in_${SUSFS_BRANCH}.patch"
 DEFAULT_USE_PATCH_LINUX=n
 if contains_device "oneplus12r" "${MANIFEST_DEVICES[@]}"; then
   DEFAULT_USE_PATCH_LINUX=y
 fi
-read -p "Enable KPM? (y/n, default: ${DEFAULT_USE_PATCH_LINUX}): " INPUT_USE_PATCH_LINUX
-USE_PATCH_LINUX=${INPUT_USE_PATCH_LINUX:-$DEFAULT_USE_PATCH_LINUX}
-read -p "KSU branch (y=SukiSU Ultra, n=KernelSU Next, default: y): " KSU_BRANCH
-KSU_BRANCH=${KSU_BRANCH:-y}
-read -p "Hook implementation (manual/syscall/kprobes, m/s/k, default m): " APPLY_HOOKS
-APPLY_HOOKS=${APPLY_HOOKS:-m}
-read -p "Apply lz4 1.9.4 & zstd 1.5.7 patches? (y/n, default: y): " APPLY_LZ4
-APPLY_LZ4=${APPLY_LZ4:-y}
-read -p "Apply the lz4kd patch? (y/n, default: n): " APPLY_LZ4KD
-APPLY_LZ4KD=${APPLY_LZ4KD:-n}
-read -p "Enable enhanced network configuration? (y/n, default: y): " APPLY_BETTERNET
-APPLY_BETTERNET=${APPLY_BETTERNET:-y}
-read -p "Add BBR and related congestion control algorithms? (y=enable/n=disable/d=default, default: n): " APPLY_BBR
-APPLY_BBR=${APPLY_BBR:-n}
-read -p "Enable Samsung SSG IO scheduler? (y/n, default: y): " APPLY_SSG
-APPLY_SSG=${APPLY_SSG:-y}
-read -p "Enable Re-Kernel? (y/n, default: n): " APPLY_REKERNEL
-APPLY_REKERNEL=${APPLY_REKERNEL:-n}
-read -p "Enable in-kernel baseband guard? (y/n, default: y): " APPLY_BBG
-APPLY_BBG=${APPLY_BBG:-y}
+if [[ "${USE_PATCH_LINUX+x}" == "x" ]]; then
+  if [[ -z "$USE_PATCH_LINUX" ]]; then
+    USE_PATCH_LINUX="$DEFAULT_USE_PATCH_LINUX"
+  fi
+  echo ">>> Using KPM toggle from environment: $USE_PATCH_LINUX"
+else
+  read -p "Enable KPM? (y/n, default: ${DEFAULT_USE_PATCH_LINUX}): " INPUT_USE_PATCH_LINUX
+  USE_PATCH_LINUX=${INPUT_USE_PATCH_LINUX:-$DEFAULT_USE_PATCH_LINUX}
+fi
+if [[ "${KSU_BRANCH+x}" == "x" ]]; then
+  if [[ -z "$KSU_BRANCH" ]]; then
+    KSU_BRANCH=y
+  fi
+  echo ">>> Using KernelSU branch choice from environment: $KSU_BRANCH"
+else
+  read -p "KSU branch (y=SukiSU Ultra, n=KernelSU Next, default: y): " KSU_BRANCH
+  KSU_BRANCH=${KSU_BRANCH:-y}
+fi
+if [[ "${APPLY_HOOKS+x}" == "x" ]]; then
+  if [[ -z "$APPLY_HOOKS" ]]; then
+    APPLY_HOOKS=m
+  fi
+  echo ">>> Using hook implementation from environment: $APPLY_HOOKS"
+else
+  read -p "Hook implementation (manual/syscall/kprobes, m/s/k, default m): " APPLY_HOOKS
+  APPLY_HOOKS=${APPLY_HOOKS:-m}
+fi
+if [[ "${APPLY_LZ4+x}" == "x" ]]; then
+  if [[ -z "$APPLY_LZ4" ]]; then
+    APPLY_LZ4=y
+  fi
+  echo ">>> Using LZ4/ZSTD toggle from environment: $APPLY_LZ4"
+else
+  read -p "Apply lz4 1.9.4 & zstd 1.5.7 patches? (y/n, default: y): " APPLY_LZ4
+  APPLY_LZ4=${APPLY_LZ4:-y}
+fi
+if [[ "${APPLY_LZ4KD+x}" == "x" ]]; then
+  if [[ -z "$APPLY_LZ4KD" ]]; then
+    APPLY_LZ4KD=n
+  fi
+  echo ">>> Using LZ4KD toggle from environment: $APPLY_LZ4KD"
+else
+  read -p "Apply the lz4kd patch? (y/n, default: n): " APPLY_LZ4KD
+  APPLY_LZ4KD=${APPLY_LZ4KD:-n}
+fi
+if [[ "${APPLY_BETTERNET+x}" == "x" ]]; then
+  if [[ -z "$APPLY_BETTERNET" ]]; then
+    APPLY_BETTERNET=y
+  fi
+  echo ">>> Using enhanced network toggle from environment: $APPLY_BETTERNET"
+else
+  read -p "Enable enhanced network configuration? (y/n, default: y): " APPLY_BETTERNET
+  APPLY_BETTERNET=${APPLY_BETTERNET:-y}
+fi
+if [[ "${APPLY_BBR+x}" == "x" ]]; then
+  if [[ -z "$APPLY_BBR" ]]; then
+    APPLY_BBR=n
+  fi
+  echo ">>> Using BBR toggle from environment: $APPLY_BBR"
+else
+  read -p "Add BBR and related congestion control algorithms? (y=enable/n=disable/d=default, default: n): " APPLY_BBR
+  APPLY_BBR=${APPLY_BBR:-n}
+fi
+if [[ "${APPLY_SSG+x}" == "x" ]]; then
+  if [[ -z "$APPLY_SSG" ]]; then
+    APPLY_SSG=y
+  fi
+  echo ">>> Using Samsung SSG toggle from environment: $APPLY_SSG"
+else
+  read -p "Enable Samsung SSG IO scheduler? (y/n, default: y): " APPLY_SSG
+  APPLY_SSG=${APPLY_SSG:-y}
+fi
+if [[ "${APPLY_REKERNEL+x}" == "x" ]]; then
+  if [[ -z "$APPLY_REKERNEL" ]]; then
+    APPLY_REKERNEL=n
+  fi
+  echo ">>> Using Re-Kernel toggle from environment: $APPLY_REKERNEL"
+else
+  read -p "Enable Re-Kernel? (y/n, default: n): " APPLY_REKERNEL
+  APPLY_REKERNEL=${APPLY_REKERNEL:-n}
+fi
+if [[ "${APPLY_BBG+x}" == "x" ]]; then
+  if [[ -z "$APPLY_BBG" ]]; then
+    APPLY_BBG=y
+  fi
+  echo ">>> Using baseband guard toggle from environment: $APPLY_BBG"
+else
+  read -p "Enable in-kernel baseband guard? (y/n, default: y): " APPLY_BBG
+  APPLY_BBG=${APPLY_BBG:-y}
+fi
 
 if [[ "$KSU_BRANCH" == "y" || "$KSU_BRANCH" == "Y" ]]; then
   KSU_TYPE="SukiSU Ultra"
