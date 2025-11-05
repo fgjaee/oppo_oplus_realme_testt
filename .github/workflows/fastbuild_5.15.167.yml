@@ -1,0 +1,181 @@
+name: 快速构建 5.15.167 (SM8550)
+
+env:
+  TZ: Asia/Shanghai
+
+on:
+  workflow_dispatch:
+    inputs:
+      manifest:
+        description: '目标一加 SM8550 机型列表(使用+分隔, 默认 oneplus12r)'
+        required: false
+        type: string
+        default: 'oneplus12r'
+      kernel_branch:
+        description: '指定 OnePlus SM8550 内核分支(留空使用设备默认)'
+        required: false
+        type: string
+        default: ''
+      custom_suffix:
+        description: '自定义内核后缀(留空自动匹配)'
+        required: false
+        type: string
+        default: ''
+      susfs_android_version:
+        description: 'SUSFS 补丁 Android 版本(13/14)'
+        required: true
+        type: choice
+        default: '13'
+        options:
+          - '13'
+          - '14'
+      enable_kpm:
+        description: '是否启用 KPM (patch_linux)' 
+        required: true
+        type: choice
+        default: 'y'
+        options:
+          - 'y'
+          - 'n'
+      ksu_type:
+        description: 'KernelSU 方案(SukiSU Ultra/KernelSU Next)'
+        required: true
+        type: choice
+        default: 'sukisu'
+        options:
+          - 'sukisu'
+          - 'ksunext'
+      hook_mode:
+        description: 'SUSFS 钩子模式(manual/syscall/kprobes)'
+        required: true
+        type: choice
+        default: 'manual'
+        options:
+          - 'manual'
+          - 'syscall'
+          - 'kprobes'
+      enable_lz4:
+        description: '是否应用 LZ4+ZSTD 补丁'
+        required: true
+        type: choice
+        default: 'y'
+        options:
+          - 'y'
+          - 'n'
+      enable_lz4kd:
+        description: '是否应用 LZ4KD 补丁'
+        required: true
+        type: choice
+        default: 'n'
+        options:
+          - 'y'
+          - 'n'
+      enable_better_net:
+        description: '是否启用网络功能增强配置'
+        required: true
+        type: choice
+        default: 'y'
+        options:
+          - 'y'
+          - 'n'
+      enable_bbr:
+        description: '是否启用 BBR 及相关算法(y/n/d=设为默认)'
+        required: true
+        type: choice
+        default: 'n'
+        options:
+          - 'y'
+          - 'n'
+          - 'd'
+      enable_ssg:
+        description: '是否启用三星 SSG IO 调度器'
+        required: true
+        type: choice
+        default: 'y'
+        options:
+          - 'y'
+          - 'n'
+      enable_rekernel:
+        description: '是否启用 Re-Kernel 支持'
+        required: true
+        type: choice
+        default: 'n'
+        options:
+          - 'y'
+          - 'n'
+      enable_bbg:
+        description: '是否启用内核级基带保护'
+        required: true
+        type: choice
+        default: 'y'
+        options:
+          - 'y'
+          - 'n'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 运行 5.15.167 构建脚本
+        id: build_kernel
+        run: |
+          chmod +x local/builder_5.15.167.sh
+          cd "$GITHUB_WORKSPACE"
+
+          if [ -n "${{ inputs.manifest }}" ]; then
+            export MANIFEST='${{ inputs.manifest }}'
+          fi
+          if [ -n "${{ inputs.kernel_branch }}" ]; then
+            export KERNEL_BRANCH='${{ inputs.kernel_branch }}'
+          fi
+
+          CUSTOM_SUFFIX='${{ inputs.custom_suffix }}'
+          SUSFS_ANDROID='${{ inputs.susfs_android_version }}'
+          USE_KPM='${{ inputs.enable_kpm }}'
+          if [ '${{ inputs.ksu_type }}' = 'sukisu' ]; then
+            KSU_BRANCH_INPUT='y'
+          else
+            KSU_BRANCH_INPUT='n'
+          fi
+          case '${{ inputs.hook_mode }}' in
+            manual) HOOK_INPUT='m' ;;
+            syscall) HOOK_INPUT='s' ;;
+            kprobes) HOOK_INPUT='k' ;;
+            *) HOOK_INPUT='m' ;;
+          esac
+          LZ4_INPUT='${{ inputs.enable_lz4 }}'
+          LZ4KD_INPUT='${{ inputs.enable_lz4kd }}'
+          BETTERNET_INPUT='${{ inputs.enable_better_net }}'
+          BBR_INPUT='${{ inputs.enable_bbr }}'
+          SSG_INPUT='${{ inputs.enable_ssg }}'
+          REKERNEL_INPUT='${{ inputs.enable_rekernel }}'
+          BBG_INPUT='${{ inputs.enable_bbg }}'
+
+          printf '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
+            "$CUSTOM_SUFFIX" \
+            "$SUSFS_ANDROID" \
+            "$USE_KPM" \
+            "$KSU_BRANCH_INPUT" \
+            "$HOOK_INPUT" \
+            "$LZ4_INPUT" \
+            "$LZ4KD_INPUT" \
+            "$BETTERNET_INPUT" \
+            "$BBR_INPUT" \
+            "$SSG_INPUT" \
+            "$REKERNEL_INPUT" \
+            "$BBG_INPUT" \
+            | local/builder_5.15.167.sh
+
+      - name: 列出产物
+        run: |
+          ls -al kernel_workspace
+
+      - name: 上传 AnyKernel3 ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kernel_5.15.167_Zips
+          path: kernel_workspace/Anykernel3-*.zip
+          if-no-files-found: error
