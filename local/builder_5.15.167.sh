@@ -110,9 +110,6 @@ if [[ "${KERNEL_BRANCH+x}" == "x" ]]; then
     KERNEL_BRANCH="$DEFAULT_BRANCH"
   fi
   echo ">>> Using kernel branch from environment: $KERNEL_BRANCH"
-if [[ -z "${KERNEL_BRANCH:-}" ]]; then
-  read -p "Enter kernel branch (default: ${DEFAULT_BRANCH}): " INPUT_KERNEL_BRANCH
-  KERNEL_BRANCH=${INPUT_KERNEL_BRANCH:-$DEFAULT_BRANCH}
 else
   read -p "Enter kernel branch (default: ${DEFAULT_BRANCH}): " INPUT_KERNEL_BRANCH
   KERNEL_BRANCH=${INPUT_KERNEL_BRANCH:-$DEFAULT_BRANCH}
@@ -132,8 +129,6 @@ else
   read -p "Enter custom kernel suffix (default: ${DEFAULT_SUFFIX}): " INPUT_CUSTOM_SUFFIX
   CUSTOM_SUFFIX=${INPUT_CUSTOM_SUFFIX:-$DEFAULT_SUFFIX}
 fi
-read -p "Enter custom kernel suffix (default: ${DEFAULT_SUFFIX}): " INPUT_CUSTOM_SUFFIX
-CUSTOM_SUFFIX=${INPUT_CUSTOM_SUFFIX:-$DEFAULT_SUFFIX}
 
 DEFAULT_SUSFS_ANDROID_VERSION=14
 if contains_device "oneplus12r" "${MANIFEST_DEVICES[@]}"; then
