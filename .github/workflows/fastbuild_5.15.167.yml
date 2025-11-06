@@ -1,4 +1,4 @@
-name: 快速构建 5.15.167 (SM8550)
+name: Fast build 5.15.167 (OnePlus SM8550)
 
 env:
   TZ: Asia/Shanghai
@@ -7,22 +7,22 @@ on:
   workflow_dispatch:
     inputs:
       manifest:
-        description: '目标一加 SM8550 机型列表(使用+分隔, 默认 oneplus12r)'
+        description: 'Target OnePlus SM8550 device list (use + as a separator, default oneplus12r)'
         required: false
         type: string
         default: 'oneplus12r'
       kernel_branch:
-        description: '指定 OnePlus SM8550 内核分支(留空使用设备默认)'
+        description: 'Override the kernel branch (leave blank to use the device default)'
         required: false
         type: string
         default: ''
       custom_suffix:
-        description: '自定义内核后缀(留空自动匹配)'
+        description: 'Custom kernel suffix (leave blank for automatic naming)'
         required: false
         type: string
         default: ''
       susfs_android_version:
-        description: 'SUSFS 补丁 Android 版本(13/14)'
+        description: 'SUSFS Android version (13/14)'
         required: true
         type: choice
         default: '13'
@@ -30,7 +30,7 @@ on:
           - '13'
           - '14'
       enable_kpm:
-        description: '是否启用 KPM (patch_linux)' 
+        description: 'Enable KPM (patch_linux)'
         required: true
         type: choice
         default: 'y'
@@ -38,7 +38,7 @@ on:
           - 'y'
           - 'n'
       ksu_type:
-        description: 'KernelSU 方案(SukiSU Ultra/KernelSU Next)'
+        description: 'KernelSU flavour (SukiSU Ultra / KernelSU Next)'
         required: true
         type: choice
         default: 'sukisu'
@@ -46,7 +46,7 @@ on:
           - 'sukisu'
           - 'ksunext'
       hook_mode:
-        description: 'SUSFS 钩子模式(manual/syscall/kprobes)'
+        description: 'SUSFS hook mode (manual/syscall/kprobes)'
         required: true
         type: choice
         default: 'manual'
@@ -54,63 +54,11 @@ on:
           - 'manual'
           - 'syscall'
           - 'kprobes'
-      enable_lz4:
-        description: '是否应用 LZ4+ZSTD 补丁'
-        required: true
-        type: choice
-        default: 'y'
-        options:
-          - 'y'
-          - 'n'
-      enable_lz4kd:
-        description: '是否应用 LZ4KD 补丁'
-        required: true
-        type: choice
-        default: 'n'
-        options:
-          - 'y'
-          - 'n'
-      enable_better_net:
-        description: '是否启用网络功能增强配置'
-        required: true
-        type: choice
-        default: 'y'
-        options:
-          - 'y'
-          - 'n'
-      enable_bbr:
-        description: '是否启用 BBR 及相关算法(y/n/d=设为默认)'
-        required: true
-        type: choice
-        default: 'n'
-        options:
-          - 'y'
-          - 'n'
-          - 'd'
-      enable_ssg:
-        description: '是否启用三星 SSG IO 调度器'
-        required: true
-        type: choice
-        default: 'y'
-        options:
-          - 'y'
-          - 'n'
-      enable_rekernel:
-        description: '是否启用 Re-Kernel 支持'
-        required: true
-        type: choice
-        default: 'n'
-        options:
-          - 'y'
-          - 'n'
-      enable_bbg:
-        description: '是否启用内核级基带保护'
-        required: true
-        type: choice
-        default: 'y'
-        options:
-          - 'y'
-          - 'n'
+      feature_flags:
+        description: 'Kernel feature toggles (comma separated: lz4=,lz4kd=,better_net=,bbr=,ssg=,rekernel=,bbg=)'
+        required: false
+        type: string
+        default: 'lz4=y,lz4kd=n,better_net=y,bbr=n,ssg=y,rekernel=n,bbg=y'
 
 jobs:
   build:
@@ -119,61 +67,71 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 运行 5.15.167 构建脚本
+      - name: Run 5.15.167 builder
         id: build_kernel
         run: |
           chmod +x local/builder_5.15.167.sh
           cd "$GITHUB_WORKSPACE"
 
           if [ -n "${{ inputs.manifest }}" ]; then
-            export MANIFEST='${{ inputs.manifest }}'
+            export MANIFEST="${{ inputs.manifest }}"
           fi
           if [ -n "${{ inputs.kernel_branch }}" ]; then
-            export KERNEL_BRANCH='${{ inputs.kernel_branch }}'
+            export KERNEL_BRANCH="${{ inputs.kernel_branch }}"
           fi
 
-          CUSTOM_SUFFIX='${{ inputs.custom_suffix }}'
-          SUSFS_ANDROID='${{ inputs.susfs_android_version }}'
-          USE_KPM='${{ inputs.enable_kpm }}'
+          if [ -n "${{ inputs.custom_suffix }}" ]; then
+            export CUSTOM_SUFFIX='${{ inputs.custom_suffix }}'
+          fi
+          export SUSFS_ANDROID_VERSION='${{ inputs.susfs_android_version }}'
+          export USE_PATCH_LINUX='${{ inputs.enable_kpm }}'
+          CUSTOM_SUFFIX="${{ inputs.custom_suffix }}"
+          SUSFS_ANDROID="${{ inputs.susfs_android_version }}"
+          USE_KPM="${{ inputs.enable_kpm }}"
           if [ '${{ inputs.ksu_type }}' = 'sukisu' ]; then
-            KSU_BRANCH_INPUT='y'
+            export KSU_BRANCH='y'
           else
-            KSU_BRANCH_INPUT='n'
+            export KSU_BRANCH='n'
           fi
           case '${{ inputs.hook_mode }}' in
-            manual) HOOK_INPUT='m' ;;
-            syscall) HOOK_INPUT='s' ;;
-            kprobes) HOOK_INPUT='k' ;;
-            *) HOOK_INPUT='m' ;;
+            manual) export APPLY_HOOKS='m' ;;
+            syscall) export APPLY_HOOKS='s' ;;
+            kprobes) export APPLY_HOOKS='k' ;;
+            *) export APPLY_HOOKS='m' ;;
           esac
-          LZ4_INPUT='${{ inputs.enable_lz4 }}'
-          LZ4KD_INPUT='${{ inputs.enable_lz4kd }}'
-          BETTERNET_INPUT='${{ inputs.enable_better_net }}'
-          BBR_INPUT='${{ inputs.enable_bbr }}'
-          SSG_INPUT='${{ inputs.enable_ssg }}'
-          REKERNEL_INPUT='${{ inputs.enable_rekernel }}'
-          BBG_INPUT='${{ inputs.enable_bbg }}'
+          FEATURE_FLAGS_RAW='${{ inputs.feature_flags }}'
+          FEATURE_FLAGS=$(printf '%s' "$FEATURE_FLAGS_RAW" | tr -d ' \t\n\r')
+          get_flag() {
+            local key="$1"
+            local default="$2"
+            local IFS=','
+            for pair in $FEATURE_FLAGS; do
+              if [ "${pair%%=*}" = "$key" ]; then
+                local value="${pair#*=}"
+                if [ -n "$value" ]; then
+                  printf '%s' "$value"
+                  return
+                fi
+              fi
+            done
+            printf '%s' "$default"
+          }
 
-          printf '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' \
-            "$CUSTOM_SUFFIX" \
-            "$SUSFS_ANDROID" \
-            "$USE_KPM" \
-            "$KSU_BRANCH_INPUT" \
-            "$HOOK_INPUT" \
-            "$LZ4_INPUT" \
-            "$LZ4KD_INPUT" \
-            "$BETTERNET_INPUT" \
-            "$BBR_INPUT" \
-            "$SSG_INPUT" \
-            "$REKERNEL_INPUT" \
-            "$BBG_INPUT" \
-            | local/builder_5.15.167.sh
+          export APPLY_LZ4="$(get_flag lz4 y)"
+          export APPLY_LZ4KD="$(get_flag lz4kd n)"
+          export APPLY_BETTERNET="$(get_flag better_net y)"
+          export APPLY_BBR="$(get_flag bbr n)"
+          export APPLY_SSG="$(get_flag ssg y)"
+          export APPLY_REKERNEL="$(get_flag rekernel n)"
+          export APPLY_BBG="$(get_flag bbg y)"
 
-      - name: 列出产物
+          local/builder_5.15.167.sh
+
+      - name: List build artefacts
         run: |
           ls -al kernel_workspace
 
-      - name: 上传 AnyKernel3 ZIP
+      - name: Upload AnyKernel3 ZIP
         uses: actions/upload-artifact@v4
         with:
           name: Kernel_5.15.167_Zips
